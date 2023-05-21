@@ -1,36 +1,29 @@
-from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import average_precision_score
 import pandas as pd
 import numpy as np
 
 
 def calculate_average_precision(
-    y_true_list, y_scores_list, num_thresholds=11, column_names=["QL", "CBDM", "LBDM"]
+    true_relevance,
+    models_predictions,
+    models_names=["QL", "CBDM", "LBDM"],
+    return_df=True,
 ):
-    num_queries = len(y_true_list)
-    average_precisions = np.zeros((len(y_scores_list), num_queries, num_thresholds))
+    result = np.zeros(len(models_predictions))
 
-    for model_index in range(len(y_scores_list)):
-        for query_index in range(num_queries):
-            y_true = y_true_list[query_index]
-            y_scores = y_scores_list[model_index, query_index]
+    for m in range(len(models_predictions)):
+        somme = 0
 
-            precision, recall, _ = precision_recall_curve(y_true, y_scores)
+        for q in range(len(true_relevance)):
+            somme += average_precision_score(
+                true_relevance[q], models_predictions[m, q]
+            )
 
-            for threshold_index, recall_threshold in enumerate(
-                np.linspace(0, 1, num=num_thresholds)
-            ):
-                mask = recall >= recall_threshold
-                average_precision = precision[mask].mean()
-                average_precisions[
-                    model_index, query_index, threshold_index
-                ] = average_precision
+        somme /= len(true_relevance)
+        result[m] = somme
 
-    average_precisions_mean = np.zeros((len(y_scores_list), num_thresholds))
-    for model_index in range(len(y_scores_list)):
-        average_precisions_mean[model_index] = average_precisions[model_index].mean(
-            axis=0
-        )
+    if return_df:
+        df = pd.DataFrame({"Algorithme": models_names, "Average Precision": result})
+        return df
 
-    df = pd.DataFrame(average_precisions_mean.T, columns=column_names)
-
-    return df
+    return result

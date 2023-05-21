@@ -74,7 +74,6 @@ class LdaRetrieval(RetrievalSystem):
         self.n_iter = n_iter
         self.nb_mc = nb_mc
         self.lmbda = lmbda
-
         self.gibbs_estimator = None
 
     def fit(self, corpus, **kwargs):
