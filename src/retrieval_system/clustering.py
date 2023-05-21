@@ -67,6 +67,7 @@ class ClusterBasedRetrieval(RetrievalSystem):
 
         for d in range(n_docs):
             Nd = self.Nds[d]
+
             P_w_D[d] = (
                 (Nd / (Nd + self.mu)) * ql_doc[d]
                 + (1 - (Nd / (Nd + self.mu))) * ql_cluster[self.doc_clusters[d]]

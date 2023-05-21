@@ -1,5 +1,6 @@
 from .base import RetrievalSystem, likelihood
 import numpy as np
+from tqdm import tqdm
 
 
 def init_params(n_docs, n_topics, vocab_len):
@@ -30,23 +31,24 @@ def gibbs_sampling(docs, n_topics, n_iter, nb_mc, alpha, beta):
     psi_markov = np.zeros((n_topics, vocab_len))
     theta_markov = np.zeros((n_docs, n_topics))
 
-    for _ in range(nb_mc):
+    for mc in range(nb_mc):
         psi, theta = init_params(n_docs, n_topics, vocab_len)
 
-        for _ in range(n_iter):
+        for _ in tqdm(range(n_iter), desc=f"Markov chain N° {mc + 1}"):
             for doc_id, doc in enumerate(docs):
-                for word_id in np.where(doc != 0)[0]:
+                word_ids = np.where(doc != 0)[0]
+                for word_id in word_ids:
                     sample_topic(doc_id, word_id, psi, theta, alpha, beta)
 
         psi_markov += psi
         theta_markov += theta
 
     psi_markov = (psi_markov + beta) / (
-        psi_markov.sum(axis=1) + beta * vocab_len
-    ).reshape(-1, 1)
+        psi_markov.sum(axis=1, keepdims=True) + beta * vocab_len
+    )
     theta_markov = (theta_markov + alpha) / (
-        theta_markov.sum(axis=1) + alpha * n_topics
-    ).reshape(-1, 1)
+        theta_markov.sum(axis=1, keepdims=True) + alpha * n_topics
+    )
 
     return psi_markov, theta_markov
 
